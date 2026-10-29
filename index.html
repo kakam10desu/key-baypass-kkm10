@@ -1,0 +1,358 @@
+<html lang="ja"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rk フェイクキーマシン</title>
+    <style>
+      :root {
+          --bg: #0b0f19;
+          --card-bg: rgba(22, 31, 48, 0.85);
+          --border: rgba(255, 255, 255, 0.08);
+          --text-main: #f8fafc;
+          --text-muted: #64748b;
+          --primary: #3b82f6;
+          --primary-hover: #2563eb;
+          --primary-glow: rgba(59, 130, 246, 0.35);
+          --code-bg: #030712;
+          --code-text: #38bdf8;
+          --radius: 16px;
+      }
+
+      * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+          background-color: var(--bg);
+          background-image:
+              radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+              radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+          color: var(--text-main);
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+      }
+
+      .app-card {
+          width: 100%;
+          max-width: 580px;
+          background: var(--card-bg);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 32px 28px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      header {
+          text-align: center;
+          margin-bottom: 24px;
+      }
+
+      h1 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          margin-bottom: 6px;
+          background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+      }
+
+      p.subtitle {
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          font-family: Consolas, Monaco, ui-monospace, monospace;
+      }
+
+      .actions {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-bottom: 24px;
+      }
+
+      .count-selector {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          background: rgba(0, 0, 0, 0.2);
+          padding: 4px;
+          border-radius: 12px;
+          border: 1px solid var(--border);
+      }
+
+      .count-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          padding: 8px 0;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s;
+      }
+
+      .count-btn:hover {
+          color: var(--text-main);
+      }
+
+      .count-btn.active {
+          background: rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-generate {
+          width: 100%;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 1rem;
+          padding: 14px;
+          background: linear-gradient(135deg, var(--primary), #6366f1);
+          color: #ffffff;
+          box-shadow: 0 4px 14px var(--primary-glow);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          user-select: none;
+      }
+
+      .btn-generate:hover {
+          opacity: 0.95;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px var(--primary-glow);
+      }
+
+      .btn-generate:active {
+          transform: translateY(1px);
+      }
+
+      .code-container {
+          background-color: var(--code-bg);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          max-height: 380px;
+          overflow-y: auto;
+      }
+
+      .code-container::-webkit-scrollbar {
+          width: 6px;
+      }
+      .code-container::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.15);
+          border-radius: 3px;
+      }
+
+      .code-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          font-family: Consolas, Monaco, ui-monospace, monospace;
+          font-size: 0.88rem;
+          transition: background 0.15s;
+      }
+
+      .code-row:last-child {
+          border-bottom: none;
+      }
+
+      .code-row:hover {
+          background: rgba(255, 255, 255, 0.03);
+      }
+
+      .code-text {
+          color: var(--code-text);
+          letter-spacing: 0.03em;
+          word-break: break-all;
+      }
+
+      .btn-copy-item {
+          padding: 6px 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.06);
+          color: #94a3b8;
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+          flex-shrink: 0;
+          margin-left: 12px;
+      }
+
+      .btn-copy-item:hover {
+          background: var(--primary);
+          color: #fff;
+      }
+
+      .empty-state {
+          padding: 40px 20px;
+          text-align: center;
+          color: var(--text-muted);
+          font-size: 0.85rem;
+      }
+
+      .toast {
+          position: fixed;
+          bottom: 28px;
+          left: 50%;
+          transform: translateX(-50%) translateY(80px);
+          background: #1e293b;
+          color: #f8fafc;
+          padding: 10px 20px;
+          border-radius: 30px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          opacity: 0;
+          pointer-events: none;
+          transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          z-index: 99;
+      }
+
+      .toast.show {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-card">
+      <header>
+        <h1>rk フェイクキーマシン</h1>
+        <p class="subtitle">FREE_ + 32桁 16進数</p>
+      </header>
+
+      <div class="actions">
+        <!-- 件数選択 -->
+        <div class="count-selector">
+          <button class="count-btn active" onclick="selectCount(1, this)">1件</button>
+          <button class="count-btn" onclick="selectCount(5, this)">5件</button>
+          <button class="count-btn" onclick="selectCount(10, this)">10件</button>
+        </div>
+
+        <!-- 生成実行ボタン -->
+        <button class="btn-generate" onclick="generate()">生成スタート</button>
+      </div>
+
+      <!-- 結果表示エリア -->
+      <div class="code-container" id="codeContainer">
+              <div class="code-row">
+                  <span class="code-text">FREE_59d54ce8b782fff85891cd4f26c9ddf5</span>
+                  <button class="btn-copy-item" onclick="copySingle('FREE_59d54ce8b782fff85891cd4f26c9ddf5')">コピー</button>
+              </div>
+          </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast">1件のキーを生成しました</div>
+
+    <script>
+      let selectedCount = 1;
+      let generatedCodes = [];
+
+      // 件数ボタン切り替え
+      function selectCount(count, btnElement) {
+          selectedCount = count;
+          document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
+          btnElement.classList.add('active');
+      }
+
+      // FREE_ + 32桁16進数の暗号生成
+      function generateCode() {
+          const chars = '0123456789abcdef';
+          const array = new Uint8Array(32);
+          window.crypto.getRandomValues(array);
+          let hash = '';
+          for (let i = 0; i < 32; i++) {
+              hash += chars[array[i] % 16];
+          }
+          return 'FREE_' + hash;
+      }
+
+      // 生成スタート実行
+      function generate() {
+          generatedCodes = [];
+          for (let i = 0; i < selectedCount; i++) {
+              generatedCodes.push(generateCode());
+          }
+          render();
+          showToast(`${selectedCount}件のキーを生成しました`);
+      }
+
+      function render() {
+          const container = document.getElementById('codeContainer');
+          if (generatedCodes.length === 0) {
+              container.innerHTML = '<div class="empty-state">「生成スタート」を押してコードを発行します</div>';
+              return;
+          }
+
+          container.innerHTML = generatedCodes.map((code) => `
+              <div class="code-row">
+                  <span class="code-text">${code}</span>
+                  <button class="btn-copy-item" onclick="copySingle('${code}')">コピー</button>
+              </div>
+          `).join('');
+      }
+
+      function copySingle(code) {
+          execCopy(code);
+          showToast('コピーしました');
+      }
+
+      function execCopy(text) {
+          if (navigator.clipboard && window.isSecureContext) {
+              navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+          } else {
+              fallbackCopy(text);
+          }
+      }
+
+      function fallbackCopy(text) {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+              document.execCommand('copy');
+          } catch (err) {}
+          document.body.removeChild(textarea);
+      }
+
+      // トースト通知表示
+      let toastTimer;
+      function showToast(message) {
+          const toast = document.getElementById('toast');
+          toast.textContent = message;
+          toast.classList.add('show');
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => {
+              toast.classList.remove('show');
+          }, 2000);
+      }
+
+      // 初期表示で自動生成
+      window.onload = function() {
+          generate();
+      };
+    </script>
+  
+</body></html>
